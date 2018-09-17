@@ -114,22 +114,24 @@ class Model:
             val_gen = data_generator([self.x_val, self.y_val], 5000)
             batch_x, batch_y = next(val_gen)
             loss, acc = self.sess.run([self.loss_op, self.accuracy],
-                                    feed_dict={self.X: batch_x, self.Y: batch_y,
-                                            self.keep_prob: 1.0})
-            print("Validation loss= " + "{:.4f}".format(loss) + ", Validation accuracy= " + "{:.3f}".format(acc))
+                                      feed_dict={self.X: batch_x, self.Y: batch_y, self.keep_prob: 1.0})
+
+            print("Validation loss = {:.4f}, Validation accuracy = {:.3f}".format(loss, acc))
 
     def test_random(self):
         test_gen = data_generator([self.x_test, self.y_test], 512)
         test_batch_x, test_batch_y = next(test_gen)
-        print("Testing Accuracy:", self.sess.run(self.accuracy, feed_dict={self.X: test_batch_x,
-                                                                           self.Y: test_batch_y,
-                                                                           self.keep_prob: 1.0}))
+        accuracy = self.sess.run(self.accuracy, feed_dict={self.X: test_batch_x,
+                                                           self.Y: test_batch_y,
+                                                           self.keep_prob: 1.0})
+        print("Testing Accuracy: ", accuracy)
 
     def predict_test(self, size):
         test_gen = data_generator([self.x_test, self.y_test], size)
         test_batch_x, test_batch_y = next(test_gen)
         prediction, correct, std_dev = self.sess.run([self.prediction, self.correct_pred, self.std_dev],
-                                      feed_dict={self.X: test_batch_x, self.Y: test_batch_y, self.keep_prob: 1.0})
+                                                     feed_dict={self.X: test_batch_x,
+                                                                self.Y: test_batch_y,
+                                                                self.keep_prob: 1.0})
         return prediction, correct, std_dev
-
 

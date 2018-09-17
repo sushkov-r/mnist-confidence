@@ -27,11 +27,9 @@ def data_generator(arrays, batch_size):
             yield [array[batch_idxs] for array in arrays]
 
 
-
 def maxpool2d(x, k=2):
     return tf.nn.max_pool(x, ksize=[1, k, k, 1], strides=[1, k, k, 1],
                           padding='SAME')
-
 
 
 class Model:
@@ -39,10 +37,12 @@ class Model:
                  learning_rate=0.001,
                  num_steps=500,
                  batch_size=128,
+                 predict_confidence=True
                  ):
         self.learning_rate = learning_rate
         self.num_steps = num_steps
         self.batch_size = batch_size
+        self.predict_confidence = predict_confidence
 
         self.display_step = 10
         self.im_width = 28
@@ -65,11 +65,16 @@ class Model:
         std_dev = cnn_pred[:, -1] / 100
         self.std_dev = tf.exp(std_dev)
 
-        # operations for computing loss function and accuracy
-        self.loss_op = tf.reduce_mean(
-            tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=self.Y)
-            / (2*self.std_dev+0.0005) + 0.5*tf.log(self.std_dev+0.0005)
-        )
+        if self.predict_confidence:
+            self.loss_op = tf.reduce_mean(
+                tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=self.Y)
+                / (2*self.std_dev+0.0005) + 0.5*tf.log(self.std_dev+0.0005)
+            )
+        else:
+            self.loss_op = tf.reduce_mean(
+                tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=self.Y)
+            )
+
         self.correct_pred = tf.equal(tf.argmax(self.prediction, 1), tf.argmax(self.Y, 1))
         self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32))
 
@@ -101,7 +106,6 @@ class Model:
         return out
 
     def train(self):
-
         tr_gen = data_generator([self.x_tr, self.y_tr], 128)
         for step in range(1, self.num_steps+1):
             batch_x, batch_y = next(tr_gen)
@@ -114,15 +118,12 @@ class Model:
                     "{:.4f}".format(loss) + ", Training Accuracy= " +
                     "{:.3f}".format(acc))
 
-        print("Optimization Finished!")
-
     def test_random(self):
         test_gen = data_generator([self.x_test, self.y_test], 512)
         test_batch_x, test_batch_y = next(test_gen)
-        print("Testing Accuracy:",
-            self.sess.run(self.accuracy, feed_dict={self.X: test_batch_x,
-                                                self.Y: test_batch_y,
-                                                self.keep_prob: 1.0}))
+        print("Testing Accuracy:", self.sess.run(self.accuracy, feed_dict={self.X: test_batch_x,
+                                                                           self.Y: test_batch_y,
+                                                                           self.keep_prob: 1.0}))
 
     def predict_test(self, size):
         test_gen = data_generator([self.x_test, self.y_test], size)

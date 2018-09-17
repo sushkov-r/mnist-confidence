@@ -20,11 +20,10 @@ def make_mnist_data():
 
 def data_generator(arrays, batch_size):
     idxs = list(range(len(arrays[0])))
-    while True:
-        np.random.shuffle(idxs)
-        for i in range(0, len(idxs), batch_size):
-            batch_idxs = idxs[i:i+batch_size]
-            yield [array[batch_idxs] for array in arrays]
+    np.random.shuffle(idxs)
+    for i in range(0, len(idxs), batch_size):
+        batch_idxs = idxs[i:i+batch_size]
+        yield [array[batch_idxs] for array in arrays]
 
 
 def maxpool2d(x, k=2):
@@ -35,16 +34,15 @@ def maxpool2d(x, k=2):
 class Model:
     def __init__(self,
                  learning_rate=0.001,
-                 num_steps=500,
+                 num_epochs=1,
                  batch_size=128,
                  predict_confidence=True
                  ):
         self.learning_rate = learning_rate
-        self.num_steps = num_steps
+        self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.predict_confidence = predict_confidence
 
-        self.display_step = 10
         self.im_width = 28
         self.num_classes = 10
         self.dropout = 0.75
@@ -106,17 +104,19 @@ class Model:
         return out
 
     def train(self):
-        tr_gen = data_generator([self.x_tr, self.y_tr], 128)
-        for step in range(1, self.num_steps+1):
-            batch_x, batch_y = next(tr_gen)
-            self.sess.run(self.train_op, feed_dict={self.X: batch_x, self.Y: batch_y, self.keep_prob: self.dropout})
-            if step % self.display_step == 0 or step == 1:
-                loss, acc = self.sess.run([self.loss_op, self.accuracy],
-                                        feed_dict={self.X: batch_x, self.Y: batch_y,
-                                                self.keep_prob: 1.0})
-                print("Step " + str(step) + ", Minibatch Loss= " +
-                    "{:.4f}".format(loss) + ", Training Accuracy= " +
-                    "{:.3f}".format(acc))
+        print("Optimizing model...")
+        for epoch in range(self.num_epochs):
+            tr_gen = data_generator([self.x_tr, self.y_tr], 128)
+            for batch_x, batch_y in tr_gen:
+                self.sess.run(self.train_op, feed_dict={self.X: batch_x, self.Y: batch_y, self.keep_prob: self.dropout})
+
+            print("Epoch {}/{}:".format(epoch+1, self.num_epochs))
+            val_gen = data_generator([self.x_val, self.y_val], 5000)
+            batch_x, batch_y = next(val_gen)
+            loss, acc = self.sess.run([self.loss_op, self.accuracy],
+                                    feed_dict={self.X: batch_x, self.Y: batch_y,
+                                            self.keep_prob: 1.0})
+            print("Validation loss= " + "{:.4f}".format(loss) + ", Validation accuracy= " + "{:.3f}".format(acc))
 
     def test_random(self):
         test_gen = data_generator([self.x_test, self.y_test], 512)

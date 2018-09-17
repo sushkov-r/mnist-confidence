@@ -1,14 +1,24 @@
 import tensorflow as tf
 import numpy as np
 
+"""
+Model for classification of MNIST digits, capable of producing prediction confidence.
+See class Model for more detail.
+"""
 
 def to_onehot(array, depth):
+    """
+    Transform an array of labels to its one hot representation.
+    """
     sparse = np.zeros((len(array), depth))
     sparse[np.arange(len(array)), array] = 1
     return sparse
 
 
 def make_mnist_data():
+    """
+    Read the MNIST dataset and split it into training, validation and test subsets.
+    """
     TRAIN_SIZE = 50000
     (x_tr_val, y_tr_val), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
     x_tr, x_val = np.split(x_tr_val, [TRAIN_SIZE])
@@ -19,6 +29,12 @@ def make_mnist_data():
 
 
 def data_generator(arrays, batch_size):
+    """
+    A finite generator of data with shuffling.
+    Arguments:
+        arrays: a list of arrays containing input and target data, from which the batches are generated.
+        batch_size: batch size. If the input arrays cannot be split equally, the last batch is partial.
+    """
     idxs = list(range(len(arrays[0])))
     np.random.shuffle(idxs)
     for i in range(0, len(idxs), batch_size):
@@ -32,12 +48,23 @@ def maxpool2d(x, k=2):
 
 
 class Model:
+    """
+    A simple CNN which is capable of estimating prediction confidence.
+    """
     def __init__(self,
                  learning_rate=0.001,
                  num_epochs=1,
                  batch_size=128,
                  predict_confidence=True
                  ):
+        """
+        Training options:
+            learning_rate
+            num_epochs
+            batch_size
+        Model option:
+            predict_confidence: Boolean. Specify whether confidence prediction is required.
+        """
         self.learning_rate = learning_rate
         self.num_epochs = num_epochs
         self.batch_size = batch_size
@@ -99,7 +126,6 @@ class Model:
         fc1 = tf.layers.dense(fc1, 1024, activation=tf.nn.relu)
         fc1 = tf.nn.dropout(fc1, dropout)
 
-        # Output, class prediction
         out = tf.layers.dense(fc1, self.num_classes+1)
         return out
 

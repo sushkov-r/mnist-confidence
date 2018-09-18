@@ -52,7 +52,7 @@ class Model:
     A simple CNN which is capable of estimating prediction confidence.
     """
     def __init__(self,
-                 learning_rate=0.001,
+                 learning_rate=0.0003,
                  num_epochs=1,
                  batch_size=128,
                  predict_confidence=True
@@ -137,14 +137,14 @@ class Model:
                 self.sess.run(self.train_op, feed_dict={self.X: batch_x, self.Y: batch_y, self.keep_prob: self.dropout})
 
             print("Epoch {}/{}:".format(epoch+1, self.num_epochs))
-            val_gen = data_generator([self.x_val, self.y_val], 5000)
+            val_gen = data_generator([self.x_val, self.y_val], 10000)
             batch_x, batch_y = next(val_gen)
             loss, acc = self.sess.run([self.loss_op, self.accuracy],
                                       feed_dict={self.X: batch_x, self.Y: batch_y, self.keep_prob: 1.0})
 
             print("Validation loss = {:.4f}, Validation accuracy = {:.3f}".format(loss, acc))
 
-    def test_random(self):
+    def test_accuracy(self, num_samples=10000):
         test_gen = data_generator([self.x_test, self.y_test], 512)
         test_batch_x, test_batch_y = next(test_gen)
         accuracy = self.sess.run(self.accuracy, feed_dict={self.X: test_batch_x,
@@ -152,8 +152,8 @@ class Model:
                                                            self.keep_prob: 1.0})
         print("Testing Accuracy: ", accuracy)
 
-    def predict_test(self, size):
-        test_gen = data_generator([self.x_test, self.y_test], size)
+    def predict_test(self, num_samples=10000):
+        test_gen = data_generator([self.x_test, self.y_test], num_samples)
         test_batch_x, test_batch_y = next(test_gen)
         prediction, correct, std_dev = self.sess.run([self.prediction, self.correct_pred, self.std_dev],
                                                      feed_dict={self.X: test_batch_x,
